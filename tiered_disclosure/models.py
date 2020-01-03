@@ -236,7 +236,7 @@ class Subsession(BaseSubsession):
 
         product_best = determine_bestproduct(product_utilities)["bestproduct"]
         self.session.vars["bestproduct_round" + str(self.round_number)] = product_best
-        
+
         print(product_dims)
         print(products_list)
         # values_dict = import_params_from_csv("justvals.csv")['csv_dict']
