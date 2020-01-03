@@ -37,7 +37,7 @@ class Constants(BaseConstants):
     asl_flag = [0,1,0,1]
     practicerounds = [True, True, False, False]
     num_rounds_treatment = [2,2,1,1]
-    ############################################# 
+    #############################################
 
     ##############################################
     # productdims_total = [3, 3, 3, 3]
@@ -93,7 +93,7 @@ class Subsession(BaseSubsession):
     bool_best_prod = models.IntegerField(doc="1 if the participant selected optimal product")
     product_best = models.IntegerField(doc="ID of product which maximizes utility for participant")
     is_mistake = models.IntegerField(doc="True if the participant selected not optimal product")
-    
+
     productdims_round = models.IntegerField(doc="dimensions of ")
 
     def vars_for_admin_report(self):
@@ -165,8 +165,8 @@ class Subsession(BaseSubsession):
         self.session.vars["productdims_round" + str(self.round_number)] = []
         self.session.vars["preferencedims_round" + str(self.round_number)] = []
 
-        #do not delete
-        #set preference profile values and utility values for each round
+        # do not delete
+        # set preference profile values and utility values for each round
         # preference_dims = []
         # preferences = set_prefdims(self.preferences)["prefdims"]
         # preference_dims.append(preferences)
@@ -181,36 +181,62 @@ class Subsession(BaseSubsession):
         current_round = self.round_number
         round_index = current_round - 1
         filename = "tiered_disclosure/my_data.csv"
-        data = pd.read_csv(filename, quotechar='"', skipinitialspace=True).to_dict()
+        data = pd.read_csv(filename)
+
+        #data = pd.read_csv(filename, quotechar='"', skipinitialspace=True).to_dict()
         products = data['productdimvals']
         preferences = data['preferencedimvals']
         representatives = data['representativedimvals']
         print('num_rounds = ', num_rounds)
-        productdimvals = [data['productdimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
-        preferencedimvals = [data['preferencedimvals'][i].replace('[','').replace(']','') for i in range(num_rounds)]
+
+        # productdimvals = [data['productdimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
+        # preferencedimvals = [data['preferencedimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
         representativedimvals = [data['representativedimvals'][i].replace('[','').replace(']','') for i in range(num_rounds)]
+        prod_dimvals = [data['productdimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
+        productdimvals = []
+        for i in range(0, len(prod_dimvals)):
+            row = [n.split(' ') for n in prod_dimvals[i]]
+            for j in range(0, len(row)):
+                for n in range(0, len(row[j])):
+                        row[j][n] = int(row[j][n])
+            productdimvals.append(row)
+
+        prefdimvals = [data['preferencedimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
+        preferencedimvals = []
+        for i in range(0, len(prefdimvals)):
+            row = [n.split(' ') for n in prefdimvals[i]]
+            for j in range(0, len(row[0])):
+                row[0][j] = int(row[0][j])
+            preferencedimvals.append(row)
+
+
+
+
+
         preference_dims = []
-        preference = preferencedimvals[round_index].split(' ')
+        preference = preferencedimvals[round_index][0]
         preference_dims.append(preference)
-        self.session.vars["preferencedims_round" + str(self.round_number)] = preferences
+        self.session.vars["preferencedims_round" + str(self.round_number)] = preference #preferences
+
         product_dims = []
         product_utilities = []
-        print(num_rounds)
         print(productdimvals)
         for i in range(self.num_products):
             product_index = i
             products_list = productdimvals[round_index]
             print(round_index)
             print(product_index)
-            product = productdimvals[round_index][product_index].split(',') #YOU HAVE ROUNDS WITH MORE THAN THREE PRODUCTS SO YOU NEED TO MODIFY JUSTVALS TO FIT THOSE PRODUCTS IN!!!
+            product = productdimvals[round_index][product_index] #YOU HAVE ROUNDS WITH MORE THAN THREE PRODUCTS SO YOU NEED TO MODIFY JUSTVALS TO FIT THOSE PRODUCTS IN!!!
             product_dims.append(product)
-            # utility = calculate_utility(product, preferences)["totalutility"]
-            # product_utilities.append(utility)
+            utility = calculate_utility(product, preference)["totalutility"]
+            product_utilities.append(utility)
 
         self.session.vars["productdims_round" + str(self.round_number)] = product_dims
         self.session.vars["productutilities_round" + str(self.round_number)] = product_utilities
-        # product_best = determine_bestproduct(product_utilities)["bestproduct"]
-        # self.session.vars["bestproduct_round" + str(self.round_number)] = product_best
+
+        product_best = determine_bestproduct(product_utilities)["bestproduct"]
+        self.session.vars["bestproduct_round" + str(self.round_number)] = product_best
+        
         print(product_dims)
         print(products_list)
         # values_dict = import_params_from_csv("justvals.csv")['csv_dict']
@@ -280,14 +306,14 @@ class Subsession(BaseSubsession):
         else:
             # set product dimension values for truncation rounds
             productdimvals_shown = []
-            for j in range(1):
+            #for j in range(1):
+            for j in range(self.num_products):
                 truncatedvals = [0] * (self.productdims_shown)
-                for i in range(1):
+                for i in range(self.productdims_shown):
                     tval = -1
                     tval = product_dims[j][i]
                     truncatedvals[i] = tval
-                    print(truncatedvals[i])
-                    print("truncatedvals[i] is", truncatedvals[i])
+                    print("truncatedvals[", i, "] are", truncatedvals[i])
                 truncvalues = copy.copy(truncatedvals)
                 productdimvals_shown.append(truncvalues)
             self.session.vars["productdims_shown_round" + str(self.round_number)] = productdimvals_shown
@@ -295,6 +321,7 @@ class Subsession(BaseSubsession):
 
         if self.practiceround:
             self.session.vars["practice_proddims" + str(self.round_number)] = []
+        print("********************")
 
         # self.productdims_round = self.session.vars["productdims_shown_round" + str(self.round_number)]
 
@@ -336,7 +363,7 @@ def import_params_from_csv(filename):
     # data = np.genfromtxt(filename, delimiter=',', names=True)
     data = pd.read_csv(filename, quotechar='"', skipinitialspace=True).to_dict()
     csv_dict = csv.DictReader(csvfile) #new (I want this to be a dictionary which stores lists)
-    
+
     for row in csv_dict:
         csv_data.append(row)
     csvfile.close()
@@ -386,10 +413,10 @@ def calculate_reputility(productdimvals, prefdimvals):
 def determine_bestproduct(productutilities):
     print('entering determine_bestproduct')
     product_best = -1
-    max_utility= max(productutilities)
+    max_utility = max(productutilities)
     product_best = productutilities.index(max_utility)+1
     return {
-        'bestproduct': product_best, 
+        'bestproduct': product_best,
     }
 
 def set_productdims(numdims):
