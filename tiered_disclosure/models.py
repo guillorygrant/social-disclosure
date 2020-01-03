@@ -191,7 +191,7 @@ class Subsession(BaseSubsession):
 
         # productdimvals = [data['productdimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
         # preferencedimvals = [data['preferencedimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
-        representativedimvals = [data['representativedimvals'][i].replace('[','').replace(']','') for i in range(num_rounds)]
+        # representativedimvals = [data['representativedimvals'][i].replace('[','').replace(']','') for i in range(num_rounds)]
         prod_dimvals = [data['productdimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
         productdimvals = []
         for i in range(0, len(prod_dimvals)):
@@ -201,16 +201,22 @@ class Subsession(BaseSubsession):
                         row[j][n] = int(row[j][n])
             productdimvals.append(row)
 
-        prefdimvals = [data['preferencedimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
+        pref_dimvals = [data['preferencedimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
         preferencedimvals = []
-        for i in range(0, len(prefdimvals)):
-            row = [n.split(' ') for n in prefdimvals[i]]
+        for i in range(0, len(pref_dimvals)):
+            row = [n.split(' ') for n in pref_dimvals[i]]
             for j in range(0, len(row[0])):
                 row[0][j] = int(row[0][j])
             preferencedimvals.append(row)
 
-
-
+        rep_dimvals = [data['representativedimvals'][i].replace('[','').replace(']','').split(';') for i in range(num_rounds)]
+        representativedimvals = []
+        for i in range(0, len(rep_dimvals)):
+            row = [n.split(' ') for n in rep_dimvals[i]]
+            for j in range(0, len(row)):
+                for n in range(0, len(row[j])):
+                        row[j][n] = int(row[j][n])
+            representativedimvals.append(row)
 
 
         preference_dims = []
@@ -296,10 +302,10 @@ class Subsession(BaseSubsession):
                 representative_index = current_representative - 1
                 representative_list = representativedimvals[round_index]
                 # representative = set_representativedims(self.productdims_total)["representativedims"]
-                representative = representativedimvals[round_index][representative_index].split(',')
+                representative = representativedimvals[round_index][representative_index]
                 representative_dims.append(representative)
-                # reputility = calculate_reputility(product_dims, representative)["representativeutility"]
-                # utility_reps.append(reputility)
+                reputility = calculate_reputility(product_dims, representative)["representativeutility"]
+                utility_reps.append(reputility)
             self.session.vars["reputility_round" + str(self.round_number)] = utility_reps
             # self.session.vars["productdims_round" + str(self.round_number)] = representative_dims
             self.session.vars["representativedims_round" + str(self.round_number)] = representative_dims
